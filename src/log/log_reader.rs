@@ -35,7 +35,6 @@ impl ActiveLog {
         if current_size == self.position {
             return;
         }
-
         let _ = file.seek(SeekFrom::Start(self.position));
         let reader = BufReader::new(&file);
         for line in reader.lines().map_while(Result::ok) {

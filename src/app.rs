@@ -121,9 +121,11 @@ impl App {
     }
 
     fn open_selected(&mut self) {
-        if let Some(i) = self.list_state.selected() && let Some(source) = self.sources.get(i).cloned() {
-                self.active_log = Some(ActiveLog::open(source, 100));
-            }
+        if let Some(i) = self.list_state.selected()
+            && let Some(source) = self.sources.get(i).cloned()
+        {
+            self.active_log = Some(ActiveLog::open(source, 100));
+        }
     }
 
     /// Set running to false to quit the application.

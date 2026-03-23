@@ -1,7 +1,7 @@
 use crate::app::App;
 use ratatui::Frame;
 use ratatui::layout::Rect;
-use ratatui::prelude::{Color};
+use ratatui::prelude::Color;
 use ratatui::style::Stylize;
 use ratatui::widgets::{Block, BorderType, Paragraph};
 
@@ -16,7 +16,7 @@ pub fn render_main(frame: &mut Frame, area: Rect, app: &App) {
         .active_log
         .as_ref()
         .map(|l| l.lines.join("\n"))
-        .unwrap_or("↵  Sélectionne une source avec Entrée".to_string());
+        .unwrap_or("↵  Select a log file to read".to_string());
 
     frame.render_widget(
         Paragraph::new(content)
