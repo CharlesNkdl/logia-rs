@@ -15,7 +15,7 @@ test:
 	cargo test --quiet
 
 run:
-	cargo run --package logia --bin main --profile dev
+	cargo run --profile dev
 
 release:
 	cargo build --release
