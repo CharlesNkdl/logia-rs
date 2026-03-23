@@ -1,5 +1,6 @@
 use crate::event::{AppEvent, Event, EventHandler};
 
+use crate::log::log_source::{LogSource, discover_sources};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::DefaultTerminal;
 
@@ -10,6 +11,7 @@ pub struct App {
     pub running: bool,
     /// Event handler.
     pub events: EventHandler,
+    pub sources: Vec<LogSource>,
 }
 
 impl Default for App {
@@ -17,6 +19,7 @@ impl Default for App {
         Self {
             running: true,
             events: EventHandler::new(),
+            sources: discover_sources(),
         }
     }
 }
