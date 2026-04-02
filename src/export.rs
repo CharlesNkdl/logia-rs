@@ -12,7 +12,10 @@ pub fn snapshot(lines: &[String], query: &str) -> Result<PathBuf, std::io::Error
         lines.iter().collect()
     } else {
         let q = query.to_lowercase();
-        lines.iter().filter(|l| l.to_lowercase().contains(&q)).collect()
+        lines
+            .iter()
+            .filter(|l| l.to_lowercase().contains(&q))
+            .collect()
     };
 
     let filename = format!("logia-snapshot-{}.log", timestamp_str());
@@ -34,7 +37,10 @@ fn timestamp_str() -> String {
         .as_secs();
 
     let (year, month, day, hour, min, sec) = secs_to_datetime(secs);
-    format!("{:04}-{:02}-{:02}_{:02}-{:02}-{:02}", year, month, day, hour, min, sec)
+    format!(
+        "{:04}-{:02}-{:02}_{:02}-{:02}-{:02}",
+        year, month, day, hour, min, sec
+    )
 }
 
 /// Converts Unix seconds to (year, month, day, hour, minute, second) without external crates.
@@ -58,7 +64,20 @@ fn secs_to_datetime(secs: u64) -> (u32, u32, u32, u32, u32, u32) {
         year += 1;
     }
 
-    let month_days: [u32; 12] = [31, if is_leap(year) { 29 } else { 28 }, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    let month_days: [u32; 12] = [
+        31,
+        if is_leap(year) { 29 } else { 28 },
+        31,
+        30,
+        31,
+        30,
+        31,
+        31,
+        30,
+        31,
+        30,
+        31,
+    ];
     let mut month = 1u32;
     for &md in &month_days {
         if remaining < md {

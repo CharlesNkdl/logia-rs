@@ -30,7 +30,9 @@ pub fn parse_laravel_line(input: &str, theme: &Theme) -> Line<'static> {
             Span::styled(format!("{}.", env), Style::default().fg(theme.log_env)),
             Span::styled(
                 format!("{}: ", level),
-                Style::default().fg(level_color).add_modifier(Modifier::BOLD),
+                Style::default()
+                    .fg(level_color)
+                    .add_modifier(Modifier::BOLD),
             ),
             Span::raw(msg.to_string()),
         ])

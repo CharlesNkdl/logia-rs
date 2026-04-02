@@ -3,13 +3,13 @@ use crate::event::{AppEvent, Event, EventHandler};
 use crate::export::snapshot;
 use crate::log::log_reader::ActiveLog;
 use crate::log::log_source::{FsEntry, LogSource, discover_sources, list_dir, shallow_scan};
-use std::path::PathBuf;
 use crate::ssh::SshClient;
 use crate::ui::base::render;
 use crate::ui::theme::ColorScheme;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::DefaultTerminal;
 use ratatui::widgets::ListState;
+use std::path::PathBuf;
 use tui_input::Input;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -76,7 +76,7 @@ pub struct App {
 
     // Form State
     pub ssh_form: SshFormState,
-    
+
     // Log Viewer State
     pub active_log: Option<ActiveLog>,
 
@@ -158,7 +158,10 @@ impl App {
         }
         let is_typing_mode = matches!(
             self.mode,
-            AppMode::SearchPrompt | AppMode::LogSearchPrompt | AppMode::SshForm | AppMode::GotoPrompt
+            AppMode::SearchPrompt
+                | AppMode::LogSearchPrompt
+                | AppMode::SshForm
+                | AppMode::GotoPrompt
         );
         if !is_typing_mode
             && key_event.modifiers == KeyModifiers::NONE
@@ -190,7 +193,10 @@ impl App {
                             match SshClient::connect(server_config) {
                                 Ok(client) => {
                                     self.loading = LoadingState::Scanning;
-                                    self.sources = crate::log::log_source::scan_remote(&client, server_config.name.clone());
+                                    self.sources = crate::log::log_source::scan_remote(
+                                        &client,
+                                        server_config.name.clone(),
+                                    );
                                     self.loading = LoadingState::Idle;
                                     self.status_message = None;
                                     self.ssh_client = Some(client);
@@ -216,54 +222,70 @@ impl App {
                     _ => {}
                 }
             }
-            AppMode::SshForm => {
-                match key_event.code {
-                    KeyCode::Esc => {
-                        self.mode = AppMode::ServerSelect;
-                    }
-                    KeyCode::Up | KeyCode::BackTab => {
-                        if self.ssh_form.active_field > 0 {
-                            self.ssh_form.active_field -= 1;
-                        }
-                    }
-                    KeyCode::Down | KeyCode::Tab => {
-                        if self.ssh_form.active_field < 4 {
-                            self.ssh_form.active_field += 1;
-                        }
-                    }
-                    KeyCode::Enter => {
-                        let name = self.ssh_form.inputs[0].value().to_string();
-                        let host = self.ssh_form.inputs[1].value().to_string();
-                        let port = self.ssh_form.inputs[2].value().parse().unwrap_or(22);
-                        let username = self.ssh_form.inputs[3].value().to_string();
-                        let auth = self.ssh_form.inputs[4].value().to_string();
-                        let is_pwd = !auth.contains('/') && !auth.contains('~');
-                        let password = if is_pwd && !auth.is_empty() { Some(auth.clone()) } else { None };
-                        let key_path = if !is_pwd && !auth.is_empty() { Some(auth.clone()) } else { None };
-                        self.config.servers.push(crate::config::ServerConfig {
-                            name, host, port, username, password, key_path,
-                        });
-                        let _ = self.config.save();
-                        self.mode = AppMode::ServerSelect;
-                    }
-                    KeyCode::Char(c) => {
-                        self.ssh_form.inputs[self.ssh_form.active_field].handle(tui_input::InputRequest::InsertChar(c));
-                    }
-                    KeyCode::Backspace => {
-                        self.ssh_form.inputs[self.ssh_form.active_field].handle(tui_input::InputRequest::DeletePrevChar);
-                    }
-                    KeyCode::Delete => {
-                        self.ssh_form.inputs[self.ssh_form.active_field].handle(tui_input::InputRequest::DeleteNextChar);
-                    }
-                    KeyCode::Left => {
-                        self.ssh_form.inputs[self.ssh_form.active_field].handle(tui_input::InputRequest::GoToPrevChar);
-                    }
-                    KeyCode::Right => {
-                        self.ssh_form.inputs[self.ssh_form.active_field].handle(tui_input::InputRequest::GoToNextChar);
-                    }
-                    _ => {}
+            AppMode::SshForm => match key_event.code {
+                KeyCode::Esc => {
+                    self.mode = AppMode::ServerSelect;
                 }
-            }
+                KeyCode::Up | KeyCode::BackTab => {
+                    if self.ssh_form.active_field > 0 {
+                        self.ssh_form.active_field -= 1;
+                    }
+                }
+                KeyCode::Down | KeyCode::Tab => {
+                    if self.ssh_form.active_field < 4 {
+                        self.ssh_form.active_field += 1;
+                    }
+                }
+                KeyCode::Enter => {
+                    let name = self.ssh_form.inputs[0].value().to_string();
+                    let host = self.ssh_form.inputs[1].value().to_string();
+                    let port = self.ssh_form.inputs[2].value().parse().unwrap_or(22);
+                    let username = self.ssh_form.inputs[3].value().to_string();
+                    let auth = self.ssh_form.inputs[4].value().to_string();
+                    let is_pwd = !auth.contains('/') && !auth.contains('~');
+                    let password = if is_pwd && !auth.is_empty() {
+                        Some(auth.clone())
+                    } else {
+                        None
+                    };
+                    let key_path = if !is_pwd && !auth.is_empty() {
+                        Some(auth.clone())
+                    } else {
+                        None
+                    };
+                    self.config.servers.push(crate::config::ServerConfig {
+                        name,
+                        host,
+                        port,
+                        username,
+                        password,
+                        key_path,
+                    });
+                    let _ = self.config.save();
+                    self.mode = AppMode::ServerSelect;
+                }
+                KeyCode::Char(c) => {
+                    self.ssh_form.inputs[self.ssh_form.active_field]
+                        .handle(tui_input::InputRequest::InsertChar(c));
+                }
+                KeyCode::Backspace => {
+                    self.ssh_form.inputs[self.ssh_form.active_field]
+                        .handle(tui_input::InputRequest::DeletePrevChar);
+                }
+                KeyCode::Delete => {
+                    self.ssh_form.inputs[self.ssh_form.active_field]
+                        .handle(tui_input::InputRequest::DeleteNextChar);
+                }
+                KeyCode::Left => {
+                    self.ssh_form.inputs[self.ssh_form.active_field]
+                        .handle(tui_input::InputRequest::GoToPrevChar);
+                }
+                KeyCode::Right => {
+                    self.ssh_form.inputs[self.ssh_form.active_field]
+                        .handle(tui_input::InputRequest::GoToNextChar);
+                }
+                _ => {}
+            },
             AppMode::FileExplorer => match key_event.code {
                 KeyCode::Esc => {
                     self.status_message = None;
@@ -304,8 +326,9 @@ impl App {
                     }
                 }
                 KeyCode::Char('s') => {
-                    let scan_path = self.current_dir.clone()
-                        .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
+                    let scan_path = self.current_dir.clone().unwrap_or_else(|| {
+                        std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."))
+                    });
                     let found = shallow_scan(&scan_path);
                     self.sources = found.clone();
                     self.filtered_sources = found;
@@ -315,12 +338,17 @@ impl App {
                     }
                 }
                 KeyCode::Char('g') => {
-                    let start = self.current_dir.clone()
-                        .or_else(|| directories::BaseDirs::new().map(|b| b.home_dir().to_path_buf()))
+                    let start = self
+                        .current_dir
+                        .clone()
+                        .or_else(|| {
+                            directories::BaseDirs::new().map(|b| b.home_dir().to_path_buf())
+                        })
                         .unwrap_or_else(|| PathBuf::from("/"));
                     self.goto_input = Input::default();
                     for c in start.to_string_lossy().chars() {
-                        self.goto_input.handle(tui_input::InputRequest::InsertChar(c));
+                        self.goto_input
+                            .handle(tui_input::InputRequest::InsertChar(c));
                     }
                     self.mode = AppMode::GotoPrompt;
                 }
@@ -361,7 +389,8 @@ impl App {
                         if let Some(completed) = tab_complete(&current) {
                             self.goto_input = Input::default();
                             for c in completed.chars() {
-                                self.goto_input.handle(tui_input::InputRequest::InsertChar(c));
+                                self.goto_input
+                                    .handle(tui_input::InputRequest::InsertChar(c));
                             }
                         }
                     }
@@ -397,8 +426,7 @@ impl App {
                     let query = self.search_input.value().to_string();
                     match snapshot(&lines, &query) {
                         Ok(path) => {
-                            self.export_message =
-                                Some(format!("Exported to {}", path.display()));
+                            self.export_message = Some(format!("Exported to {}", path.display()));
                         }
                         Err(e) => {
                             self.export_message = Some(format!("Export failed: {}", e));
@@ -517,7 +545,8 @@ impl App {
                         self.list_state.select(Some(0));
                     }
                     Some(FsEntry::LogFile(source)) => {
-                        self.active_log = Some(ActiveLog::open(source, 100, self.ssh_client.as_ref()));
+                        self.active_log =
+                            Some(ActiveLog::open(source, 100, self.ssh_client.as_ref()));
                         self.mode = AppMode::LogViewer;
                     }
                     None => {}
@@ -544,8 +573,14 @@ pub fn tab_complete(input: &str) -> Option<String> {
     let (dir, prefix) = if input.ends_with('/') || input.ends_with(std::path::MAIN_SEPARATOR) {
         (path.clone(), String::new())
     } else {
-        let parent = path.parent().map(|p| p.to_path_buf()).unwrap_or_else(|| PathBuf::from("/"));
-        let stem = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+        let parent = path
+            .parent()
+            .map(|p| p.to_path_buf())
+            .unwrap_or_else(|| PathBuf::from("/"));
+        let stem = path
+            .file_name()
+            .map(|n| n.to_string_lossy().to_string())
+            .unwrap_or_default();
         (parent, stem)
     };
 
@@ -585,7 +620,11 @@ pub fn tab_complete(input: &str) -> Option<String> {
                 .take_while(|(i, c)| matches.iter().all(|m| m.chars().nth(*i) == Some(*c)))
                 .map(|(_, c)| c)
                 .collect();
-            if common.len() > input.len() { Some(common) } else { None }
+            if common.len() > input.len() {
+                Some(common)
+            } else {
+                None
+            }
         }
     }
 }

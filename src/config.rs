@@ -44,8 +44,7 @@ impl AppConfig {
     }
 
     pub fn save(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let path =
-            Self::config_path().ok_or("Could not find configuration directory")?;
+        let path = Self::config_path().ok_or("Could not find configuration directory")?;
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)?;
         }

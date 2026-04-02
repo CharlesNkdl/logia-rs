@@ -101,8 +101,11 @@ pub fn render_main(frame: &mut Frame, area: Rect, app: &App, theme: &Theme) {
         let scheme_name = app.color_scheme.name();
         let welcome_text = vec![
             Line::from(""),
-            Line::from(" Welcome to Logia-rs!")
-                .style(Style::default().fg(theme.welcome_title).add_modifier(Modifier::BOLD)),
+            Line::from(" Welcome to Logia-rs!").style(
+                Style::default()
+                    .fg(theme.welcome_title)
+                    .add_modifier(Modifier::BOLD),
+            ),
             Line::from(""),
             Line::from(" TUI for viewing and searching logs."),
             Line::from(" laravel and system oriented"),
@@ -240,9 +243,7 @@ pub fn render_main(frame: &mut Frame, area: Rect, app: &App, theme: &Theme) {
         let query = app.search_input.value().to_lowercase();
         log.lines
             .iter()
-            .filter(|line_str| {
-                query.is_empty() || line_str.to_lowercase().contains(&query)
-            })
+            .filter(|line_str| query.is_empty() || line_str.to_lowercase().contains(&query))
             .map(|line_str| parse_laravel_line(line_str, theme))
             .collect()
     } else {

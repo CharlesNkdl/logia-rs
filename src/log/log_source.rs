@@ -1,6 +1,6 @@
+use crate::config::AppConfig;
 use std::path::{Path, PathBuf};
 use walkdir::{DirEntry, WalkDir};
-use crate::config::AppConfig;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum LogLocation {
@@ -100,7 +100,12 @@ pub fn shallow_scan(path: &Path) -> Vec<LogSource> {
 
     for entry in walker.filter_map(|e| e.ok()) {
         if entry.file_type().is_file() {
-            if entry.path().extension().map(|e| e == "log").unwrap_or(false) {
+            if entry
+                .path()
+                .extension()
+                .map(|e| e == "log")
+                .unwrap_or(false)
+            {
                 let ep = entry.path().to_path_buf();
                 let name = ep
                     .file_name()
@@ -210,7 +215,11 @@ pub fn scan_remote(client: &crate::ssh::SshClient, host_name: String) -> Vec<Log
                 let trimmed = line.trim();
                 if !trimmed.is_empty() {
                     let pb = PathBuf::from(trimmed);
-                    let name = pb.file_name().unwrap_or_default().to_string_lossy().to_string();
+                    let name = pb
+                        .file_name()
+                        .unwrap_or_default()
+                        .to_string_lossy()
+                        .to_string();
                     let mut display_name = name.clone();
                     if let Some(parent) = pb.parent() {
                         if let Some(gp_name) = parent.parent().and_then(|p| p.file_name()) {
@@ -246,7 +255,10 @@ mod tests {
 
     #[test]
     fn list_dir_returns_dirs_then_logs() {
-        let tmp = tempfile::Builder::new().prefix("logia_test_").tempdir().unwrap();
+        let tmp = tempfile::Builder::new()
+            .prefix("logia_test_")
+            .tempdir()
+            .unwrap();
         let root = tmp.path();
         fs::create_dir(root.join("subdir")).unwrap();
         make_log(root, "a.log");
@@ -255,7 +267,13 @@ mod tests {
         assert!(matches!(&entries[0], FsEntry::Directory(p) if p.ends_with("subdir")));
         let log_names: Vec<_> = entries[1..]
             .iter()
-            .filter_map(|e| if let FsEntry::LogFile(s) = e { Some(s.name.as_str()) } else { None })
+            .filter_map(|e| {
+                if let FsEntry::LogFile(s) = e {
+                    Some(s.name.as_str())
+                } else {
+                    None
+                }
+            })
             .collect();
         assert!(log_names.contains(&"a.log"));
         assert!(log_names.contains(&"b.log"));
@@ -263,7 +281,10 @@ mod tests {
 
     #[test]
     fn list_dir_excludes_non_log_files() {
-        let tmp = tempfile::Builder::new().prefix("logia_test_").tempdir().unwrap();
+        let tmp = tempfile::Builder::new()
+            .prefix("logia_test_")
+            .tempdir()
+            .unwrap();
         let root = tmp.path();
         fs::write(root.join("readme.txt"), "text").unwrap();
         make_log(root, "app.log");
@@ -292,7 +313,12 @@ mod tests {
         let sources = shallow_scan(root);
         let names: Vec<&str> = sources.iter().map(|s| s.name.as_str()).collect();
 
-        assert!(names.contains(&"d1.log"), "depth 1 missing: found {:?} in {:?}", names, root);
+        assert!(
+            names.contains(&"d1.log"),
+            "depth 1 missing: found {:?} in {:?}",
+            names,
+            root
+        );
         assert!(names.contains(&"d2.log"), "depth 2 missing");
         assert!(names.contains(&"d3.log"), "depth 3 missing");
         assert!(!names.contains(&"d4.log"), "depth 4 should be excluded");
@@ -300,7 +326,10 @@ mod tests {
 
     #[test]
     fn shallow_scan_empty_dir_returns_empty() {
-        let tmp = tempfile::Builder::new().prefix("logia_test_").tempdir().unwrap();
+        let tmp = tempfile::Builder::new()
+            .prefix("logia_test_")
+            .tempdir()
+            .unwrap();
         let sources = shallow_scan(tmp.path());
         assert!(sources.is_empty());
     }
