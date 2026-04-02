@@ -34,6 +34,27 @@ make release
 ./target/release/logia-rs
 ```
 
+## Install
+
+If you have the Rust toolchain:
+
+```bash
+make install
+```
+if you have the binary
+
+```bash
+tar -xzf logia-rs-*-your-platform.tar.gz
+mv logia-rs ~/.local/bin/logia
+chmod +x ~/.local/bin/logia
+```
+
+Make sure `~/.local/bin` is in your `PATH`:
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
 ## Configuration
 
 Config lives at `~/.config/logia/config.toml`. You can define custom scan paths and SSH servers there.
