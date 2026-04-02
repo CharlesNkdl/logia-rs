@@ -10,6 +10,18 @@ edition = "2024"
 crossterm = "0.28.1"
 ratatui = "0.30.0"
 color-eyre = "0.6.3"
+ssh2 = "0.9.5"
+serde = { version = "1.0.228", features = ["derive"] }
+toml = "1.1.2"
+directories = "6.0.0"
+fuzzy-matcher = "0.3.7"
+regex = "1.12.3"
+walkdir = "2.5.0"
+tui-input = "0.15.0"
+crossbeam-channel = "0.5.15"
+
+[dev-dependencies]
+tempfile = "3"
 
 # Read the optimization guideline for more details: https://ratatui.rs/recipes/apps/release-your-app/#optimizations
 [profile.release]

@@ -1,46 +1,47 @@
-use crate::log::log_source::LogSource;
-use std::fs;
+use crate::log::log_source::{LogLocation, LogSource};
+use crate::ssh::SshClient;
 use std::fs::File;
-use std::io::{BufRead, BufReader, Seek, SeekFrom};
+use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 
 #[derive(Debug)]
 pub struct ActiveLog {
     pub source: LogSource,
     pub lines: Vec<String>,
-    position: u64,
+    pub scroll: u16,
 }
 
 impl ActiveLog {
-    pub fn open(source: LogSource, tail: usize) -> Self {
-        let lines = tail_file(&source.path, tail);
-        let position = fs::metadata(&source.path).map(|m| m.len()).unwrap_or(0);
+    pub fn open(source: LogSource, tail: usize, ssh: Option<&SshClient>) -> Self {
+        let lines = Self::load(&source, tail, ssh);
         Self {
             source,
             lines,
-            position,
+            scroll: 0,
         }
     }
-    pub fn poll(&mut self) {
-        let Ok(mut file) = File::open(&self.source.path) else {
-            return;
-        };
-        let current_size = fs::metadata(&self.source.path)
-            .map(|m| m.len())
-            .unwrap_or(0);
-        if current_size < self.position {
-            self.position = 0;
-            self.lines.clear();
+
+    /// Reload the file from disk (manual refresh via `r`).
+    pub fn refresh(&mut self, tail: usize, ssh: Option<&SshClient>) {
+        self.lines = Self::load(&self.source, tail, ssh);
+        self.scroll = 0;
+    }
+
+    fn load(source: &LogSource, tail: usize, ssh: Option<&SshClient>) -> Vec<String> {
+        match &source.location {
+            LogLocation::Remote(_) => {
+                if let Some(client) = ssh {
+                    let cmd = format!("tail -n {} {}", tail, source.path.to_string_lossy());
+                    client
+                        .execute(&cmd)
+                        .map(|o| o.lines().map(|s| s.to_string()).collect())
+                        .unwrap_or_default()
+                } else {
+                    vec!["Error: No SSH connection active for remote log".to_string()]
+                }
+            }
+            LogLocation::Local => tail_file(&source.path, tail),
         }
-        if current_size == self.position {
-            return;
-        }
-        let _ = file.seek(SeekFrom::Start(self.position));
-        let reader = BufReader::new(&file);
-        for line in reader.lines().map_while(Result::ok) {
-            self.lines.push(line);
-        }
-        self.position = current_size;
     }
 }
 

@@ -8,9 +8,18 @@ It's a simple log agglomerator, much needed in my little enterprise where monito
 
 ## Features
 
-- Scans `/var/log/` recursively and lists all readable log files
-- Navigate sources with the keyboard, open any log with Enter
-- Real-time updates — new lines are picked up automatically on each tick
+- Scans configured paths recursively and lists all readable `.log` files
+- Navigate the filesystem directly from the TUI, go to any arbitrary path with `g`
+- Shallow scan a directory (up to 3 levels deep) with `s`
+- Connect to remote servers over SSH and browse their logs the same way
+- Static log reading with manual refresh (`r`)
+- Scroll through logs with arrow keys, `j/k`, `PgUp/PgDn`, `Home/End`
+- Fuzzy search across file names and inside log content
+- Export filtered log snapshots to a local file
+- Three color themes, cycle with `t`
+- Add SSH servers directly from the TUI
+
+there is a laravel focus on parsing and color since we mostly work with laravel
 
 ---
 
@@ -25,6 +34,42 @@ make release
 ./target/release/logia-rs
 ```
 
+## Install
+
+If you have the Rust toolchain:
+
+```bash
+make install
+```
+if you have the binary
+
+```bash
+tar -xzf logia-rs-*-your-platform.tar.gz
+mv logia-rs ~/.local/bin/logia
+chmod +x ~/.local/bin/logia
+```
+
+Make sure `~/.local/bin` is in your `PATH`:
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+## Configuration
+
+Config lives at `~/.config/logia/config.toml`. You can define custom scan paths and SSH servers there.
+
+```toml
+local_paths = ["/var/log", "/var/www/html/storage/logs"]
+
+[[servers]]
+name = "prod-1"
+host = "1.2.3.4"
+port = 22
+username = "deploy"
+key_path = "~/.ssh/id_rsa"
+```
+
 ## Development
 
 ```bash
@@ -33,14 +78,5 @@ make lint     # cargo clippy
 make test     # cargo test
 make clean    # fmt + clippy
 make docs     # cargo doc
-make all      # format → lint → test → run
+make all      # format -> lint -> test -> run
 ```
-
-## To be done 
-Implementation of config file or a superior parsing, to handle project specific logs locations.
-main interest is right now -> laravel logs parsing
-on top of that, i would need more test to use it in conjunction to ssh, to not having to download it to each server
-- more test
-- fuzzy finder in log file to help finding info
-- ????
-- probably more
