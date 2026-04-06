@@ -17,7 +17,7 @@ directories = "6.0.0"
 fuzzy-matcher = "0.3.7"
 regex = "1.12.3"
 walkdir = "2.5.0"
-tui-input = "0.15.0"
+tui-input = "0.15.1"
 crossbeam-channel = "0.5.15"
 
 [dev-dependencies]
